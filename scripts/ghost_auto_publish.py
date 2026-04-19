@@ -19,6 +19,11 @@ ghost_auto_publish.py — Ghost 自动发布（CDP + mobiledoc HTML Card + 图�
 import json, re, base64, sys, argparse
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _logger import get_logger
+
+log = get_logger("ghost.publish")
+
 
 def extract_content(html_path: str) -> dict:
     """从博文 HTML 提取标题、样式+正文、标签、图片
@@ -302,8 +307,6 @@ def publish(html_path: str, slug: str = None, do_publish: bool = True, update_id
 
             # ── Supabase content_posts 写入（非阻塞） ──
             try:
-                import sys as _sys
-                _sys.path.insert(0, str(Path(__file__).parent))
                 from supabase_writer import write_content_post
                 import re as _re
                 _html_text = Path(html_path).read_text(encoding="utf-8")
@@ -320,7 +323,8 @@ def publish(html_path: str, slug: str = None, do_publish: bool = True, update_id
                     "agent": "insight",
                 })
             except Exception as _e:
-                print(f"[WARN] content_post DB 写入跳过：{_e}", file=__import__('sys').stderr)
+                log.warning("content_post DB write skipped (id=%s slug=%s): %s",
+                            result.get("id"), result.get("slug"), _e, exc_info=True)
 
             # ── Supabase blog_posts 写入（非阻塞，已合并至 content_posts） ──
             # upsert_blog_post 已废弃，写入逻辑在上方 write_content_post 中处理
