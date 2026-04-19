@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}} — easonzhang.ai</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", Georgia, serif; font-size: 17px; line-height: 1.9; color: #1a1a1a; background: #f5f3f0; }
+nav { background: #8B3A2A; color: #fff; padding: 0 24px; display: flex; align-items: center; height: 48px; font-size: 13px; }
+nav .logo { font-weight: 700; letter-spacing: 1px; }
+nav .tag { background: rgba(255,255,255,0.2); font-size: 10px; padding: 2px 8px; border-radius: 2px; margin-left: auto; letter-spacing: 1px; }
+.hero { background: #8B3A2A; color: #fff; padding: 52px 24px 44px; text-align: center; }
+.hero-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: 0.6; margin-bottom: 14px; font-family: Arial, sans-serif; }
+.hero h1 { font-size: 28px; font-weight: 800; line-height: 1.3; max-width: 640px; margin: 0 auto 14px; color: #fff; }
+.hero-meta { font-size: 13px; opacity: 0.65; font-family: Arial, sans-serif; }
+.hero-divider { width: 36px; height: 3px; background: rgba(255,255,255,0.5); margin: 18px auto 0; }
+.page { max-width: 100%; margin: 0; background: #fff; padding: 40px 20px 60px; } /* 左右20px必须保留，手机端防文字贴边 */
+@media (max-width: 600px) { .page { padding: 32px 16px 52px; } .hero h1 { font-size: 22px; } }
+.lead { font-size: 17px; color: #555; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid #e9e9e7; line-height: 1.9; }
+h2 { font-size: 20px; color: #1a1a1a; margin: 44px 0 16px; padding-left: 14px; border-left: 4px solid #8B3A2A; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+h2 .label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #fff; background: #8B3A2A; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; flex-shrink: 0; }
+h3 { font-size: 17px; color: #1a1a1a; margin: 32px 0 10px; font-weight: 700; }
+p { margin-bottom: 1.4em; font-size: 17px; line-height: 1.9; }
+strong { color: #1a1a1a; font-weight: 700; }
+em { color: #555; font-style: italic; }
+ul, ol { margin: 0.2em 0 1.4em 1.6em; }
+li { margin-bottom: 0.6em; line-height: 1.8; }
+hr { border: none; border-top: 1px solid #e0dbd8; margin: 36px 0; }
+blockquote { border-left: 3px solid #8B3A2A; padding: 12px 20px; margin: 1.4em 0; background: #faf5f3; color: #555; font-style: italic; border-radius: 0 4px 4px 0; }
+.lesson { background: #f5f3f0; border-radius: 6px; padding: 20px 24px; margin: 20px 0; }
+.lesson-num { font-size: 11px; letter-spacing: 2px; color: #8B3A2A; font-family: Arial, sans-serif; font-weight: 700; margin-bottom: 8px; }
+.lesson-text { font-size: 16px; line-height: 1.8; }
+.note-box { background: #f5f3f0; border: 1px solid #d4b5aa; border-radius: 6px; padding: 16px 20px; margin: 24px 0; font-size: 15px; color: #555; }
+.alert-grid { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
+.alert-item { padding: 12px 16px; border-radius: 6px; font-size: 15px; }
+.alert-yellow { background: #fffbe6; border: 1px solid #ffe58f; }
+.alert-orange { background: #fff3e0; border: 1px solid #ffb74d; }
+.alert-red { background: #fce8e8; border: 1px solid #f5a8a8; }
+.closing { background: #8B3A2A; color: #fff; padding: 28px 32px; margin-top: 48px; border-radius: 4px; }
+.closing .name { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.closing .creds { font-size: 12px; opacity: 0.70; line-height: 1.8; margin-bottom: 8px; font-family: Arial, sans-serif; letter-spacing: 0.5px; }
+.closing .tagline { font-size: 13px; opacity: 0.85; line-height: 1.7; }
+.x-box { background: #f5f3f0; border: 1px solid #e0dbd8; border-radius: 6px; padding: 20px 24px; margin-top: 28px; }
+.x-box .x-label { font-size: 11px; letter-spacing: 2px; color: #8B3A2A; font-family: Arial, sans-serif; font-weight: 700; margin-bottom: 10px; }
+.x-box p { font-size: 15px; margin: 0; color: #1a1a1a; }
+.site-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e0dbd8; font-size: 12px; color: #aaa; font-family: Arial, sans-serif; text-align: center; }
+</style>
+</head>
+<body>
+<nav><span class="logo">easonzhang.ai</span><span class="tag">DRAFT · {{DATE}}</span></nav>
+<div class="hero">
+  <div class="hero-label">{{HERO_LABEL}}</div>
+  <h1>{{TITLE}}</h1>
+  <div class="hero-meta">Eason Zhang · {{DATE}}</div>
+  <div class="hero-divider"></div>
+</div>
+<div class="page">
+
+<div class="lead">
+{{LEAD}}
+</div>
+
+{{BODY}}
+
+<div class="closing">
+  <div class="name">我叫 Eason</div>
+  <div class="creds">CFA持证人 · 前战略咨询合伙人 · 创业者 · 投资人</div>
+  <div class="tagline">{{TAGLINE}}</div>
+</div>
+<div class="x-box">
+  <div class="x-label">X · 发布简介</div>
+  <p>{{X_SUMMARY}}</p>
+</div>
+<div class="site-footer">easonzhang.ai · Eason Zhang</div>
+
+</div>
+</body>
+</html>

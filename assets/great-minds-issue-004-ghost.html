@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>这周，聪明人在想什么 · Great Minds Think Alike · Issue 004 · 2026-04-04</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',Georgia,serif; background: #f5f3f0; color: rgba(0,0,0,0.88); font-size: 15px; line-height: 2.0; }
+
+/* ── 必须保留这两个 class：ghost_auto_publish.py 靠它们提取内容边界 ── */
+.hero { background: #8B3A2A; color: #fff; padding: 36px 24px 28px; text-align: center; }
+.hero .series { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; margin-bottom: 8px; }
+.hero h1 { font-size: 26px; font-weight: 900; line-height: 1.3; max-width: 640px; margin: 0 auto 10px; color: #fff; }
+.hero .tagline { font-size: 13px; opacity: 0.75; }
+.hero-label { display: none; }
+
+/* ── 内容容器 ── */
+.container { max-width: 740px; margin: 0 auto; padding: 28px 18px 48px; }
+
+/* ── 期刊元信息 ── */
+.issue-meta { font-size: 12px; color: #aaa; border-bottom: 1px solid #E0DBD8; padding-bottom: 12px; margin-bottom: 28px; }
+
+/* ── 目录 ── */
+.toc { background: #fff; border: 1px solid #E0DBD8; border-left: 4px solid #8B3A2A; border-radius: 4px; padding: 16px 20px; margin-bottom: 32px; }
+.toc h3 { font-size: 12px; font-weight: 800; color: #8B3A2A; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+.toc-sec { font-size: 12px; font-weight: 800; color: #999; letter-spacing: 0.8px; text-transform: uppercase; margin: 10px 0 4px; }
+.toc ol { padding-left: 18px; }
+.toc li { font-size: 14px; line-height: 2.0; }
+.toc a { color: #8B3A2A; text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+/* ── 章节标签 ── */
+.sec-label { font-size: 11px; font-weight: 800; color: #8B3A2A; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid #8B3A2A; padding-bottom: 8px; margin: 36px 0 20px; }
+
+/* ── 精读文章卡片 ── */
+.article { background: #fff; border: 1px solid #E0DBD8; border-radius: 6px; padding: 26px 26px 30px; margin-bottom: 32px; }
+.article-header { border-bottom: 1px solid #F0E4D8; padding-bottom: 14px; margin-bottom: 20px; }
+.art-num { font-size: 11px; font-weight: 800; color: #C5963A; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.art-title { font-size: 20px; font-weight: 900; line-height: 1.35; margin-bottom: 8px; }
+.art-title a { color: #1a1a1a; text-decoration: none; border-bottom: 2px solid #8B3A2A; padding-bottom: 1px; }
+.art-title a:hover { color: #8B3A2A; }
+.art-meta { font-size: 13px; color: #888; }
+.art-meta a { color: #8B3A2A; text-decoration: none; font-weight: 600; }
+h2.sec { font-size: 15px; font-weight: 800; color: #1a1a1a; margin: 24px 0 10px; padding-left: 12px; border-left: 4px solid #8B3A2A; line-height: 1.5; }
+p { margin-bottom: 15px; font-size: 15px; line-height: 2.0; color: #222; }
+blockquote { border-left: 3px solid #C5963A; padding: 10px 18px; margin: 18px 0; background: #fff8f0; font-style: italic; color: #555; font-size: 14px; line-height: 1.9; border-radius: 0 4px 4px 0; }
+ul, ol { padding-left: 20px; margin-bottom: 14px; }
+li { font-size: 14px; line-height: 2.1; color: #333; margin-bottom: 2px; }
+.callout { background: #1a1a1a; color: #fff; border-radius: 6px; padding: 16px 20px; margin: 20px 0; font-size: 14px; line-height: 1.9; font-style: italic; }
+.callout strong { color: #C5963A; font-style: normal; }
+.src-btn { display: inline-block; background: #8B3A2A; color: #fff; padding: 8px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; text-decoration: none; margin-top: 12px; }
+.src-btn:hover { background: #6B2A1A; }
+
+/* ── 其他值得关注（简卡）── */
+.other { background: #fff; border: 1px solid #E0DBD8; border-radius: 6px; padding: 20px 24px 22px; margin-bottom: 20px; }
+.other-title { font-size: 17px; font-weight: 800; margin-bottom: 5px; line-height: 1.4; }
+.other-title a { color: #1a1a1a; text-decoration: none; border-bottom: 1px solid #C5963A; }
+.other-meta { font-size: 12px; color: #999; margin-bottom: 12px; }
+.other p { font-size: 14px; line-height: 1.95; color: #333; margin-bottom: 10px; }
+.other ul { padding-left: 18px; margin-bottom: 0; }
+.other li { font-size: 14px; line-height: 2.0; }
+
+/* ── 图片 ── */
+.img-block { margin: 22px 0; text-align: center; }
+.img-block img { max-width: 100%; border-radius: 6px; border: 1px solid #E0DBD8; display: block; margin: 0 auto; }
+.img-cap { font-size: 12px; color: #999; margin-top: 8px; font-style: italic; }
+
+/* ── 签名 ── */
+.closing { background: #8B3A2A; color: #fff; padding: 28px 32px; margin-top: 48px; border-radius: 4px; }
+.closing .name { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.closing .creds { font-size: 12px; opacity: 0.70; line-height: 1.8; margin-bottom: 8px; font-family: Arial, sans-serif; letter-spacing: 0.5px; }
+.closing .tagline { font-size: 13px; opacity: 0.85; line-height: 1.7; }
+
+/* ── site-footer：必须保留这个 class，ghost_auto_publish.py 用它识别内容结束边界 ── */
+.site-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #E0DBD8; font-size: 12px; color: #aaa; text-align: center; line-height: 1.9; }
+</style>
+</head>
+<body>
+
+<!-- ══ ghost_auto_publish.py 提取起点：.hero ══ -->
+<div class="hero">
+  <div class="hero-label">GREAT MINDS THINK ALIKE</div>
+  <div class="series">Great Minds Think Alike · Issue 004</div>
+  <h1>这周，聪明人在想什么</h1>
+  <div class="tagline">精选 AI 领域最值得关注的独立思考者——他们的一手内容，不加滤镜。</div>
+</div>
+
+<div class="container">
+
+<div class="issue-meta">
+  2026-04-04 &nbsp;·&nbsp; 覆盖博客 23 个 &nbsp;·&nbsp; 精选 4 篇深度翻译 + 1 篇值得关注
+</div>
+
+<!-- ── 目录 ── -->
+<div class="toc">
+  <h3>本期目录</h3>
+  <div class="toc-sec">最值得关注的新思考</div>
+  <ol>
+    <li><a href="#art-01">Alex Kim — Claude Code 源码泄露：虚假工具、挫败感检测、隐身模式</a></li>
+    <li><a href="#art-02">Anthropic GitHub Skills — Claude API Skill 持续自动同步</a></li>
+    <li><a href="#art-03">Simon Willison — 当 AI 开始自己找漏洞：安全研究的认知冲击</a></li>
+    <li><a href="#art-04">Alex Kim — 在 Kubernetes 上编排 LLM 微调：SkyPilot + MLflow 实战</a></li>
+  </ol>
+  <div class="toc-sec" style="margin-top:12px;">其他值得关注的思考</div>
+  <ol>
+    <li><a href="#other-01">Anthropic 推出 Usage Bundles，额外赠送使用额度</a></li>
+  </ol>
+</div>
+
+<!-- ── 精读文章区 ── -->
+<div class="sec-label">最值得关注的新思考</div>
+
+<!-- ARTICLE 01 -->
+<div class="article" id="art-01">
+  <div class="article-header">
+    <div class="art-num">01 · Alex Kim · 2026-03-31</div>
+    <div class="art-title"><a href="https://alex000kim.com/posts/2026-03-31-claude-code-source-leak/" target="_blank">Claude Code 源码泄露：虚假工具、挫败感正则、隐身模式，以及更多</a></div>
+    <div class="art-meta">来源：<a href="https://alex000kim.com/" target="_blank">alex000kim.com</a> · HN 722 points · <a href="https://alex000kim.com/posts/2026-03-31-claude-code-source-leak/" target="_blank">阅读原文 ↗</a></div>
+  </div>
+
+  <p>Anthropic 在 Claude Code 的 npm 包里意外附带了 <code>.map</code> 文件，完整可读的 TypeScript 源码就这么暴露了。这是一周内 Anthropic 的第二次意外泄露——上次是 model spec。Alex Kim 花了一个上午读完 HN 评论和泄露源码，按"辣度"排了个序。</p>
+
+  <h2 class="sec">Anti-distillation：用虚假工具污染竞争对手</h2>
+
+  <p>源码里有个 flag 叫 <code>ANTI_DISTILLATION_CC</code>。开启后，Claude Code 会在 API 请求里附带 <code>anti_distillation: ['fake_tools']</code>，告诉服务端往 system prompt 里悄悄注入虚假的工具定义。</p>
+
+  <p>逻辑很直接：如果有人在录制 Claude Code 的 API 流量来训练竞品模型，这些假工具会污染训练数据。这个功能通过 GrowthBook feature flag 控制，只对第一方 CLI session 生效。</p>
+
+  <p>还有第二层机制——connector-text summarization。服务端会把 assistant 在 tool call 之间的文本做摘要加密签名。录 API 流量的人只能拿到摘要，看不到完整推理链。</p>
+
+  <p>但说实话，绕过并不难。MITM proxy 把请求里的 <code>anti_distillation</code> 字段去掉就行了，因为注入是服务端 opt-in 的。设一个环境变量 <code>CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1</code> 也能关掉。认真做 distillation 的人大概一个小时就能找到所有绕过方式。真正的保护可能还是靠法律，不是技术。</p>
+
+  <h2 class="sec">Undercover Mode：让 AI 假装自己不是 AI</h2>
+
+  <p><code>undercover.ts</code> 大概 90 行代码，做的事情是：在非 Anthropic 内部 repo 里使用 Claude Code 时，自动抹掉所有内部痕迹——"Capybara"、"Tengu"之类的内部代号，Slack 频道名，甚至"Claude Code"本身。</p>
+
+  <p>代码里写着一行注释：<em>"There is NO force-OFF. This guards against model codename leaks."</em> 你可以强制开启，但没办法强制关闭。这是个单向门。</p>
+
+  <p>这意味着 Anthropic 员工在开源项目里提交的 AI 生成代码，不会有任何 AI 标注。隐藏内部代号没问题，但让 AI 主动伪装成人类——这是另一回事。</p>
+
+  <h2 class="sec">用正则表达式检测用户挫败感（没错，正则）</h2>
+
+  <p>源码里有个正则表达式，用来检测用户是不是在发飙：</p>
+
+  <blockquote><code>/\b(wtf|wth|ffs|omfg|shit(ty|tiest)?|dumbass|horrible|awful|piss(ed|ing)? off|piece of (shit|crap|junk)|what the (fuck|hell)|fucking? (broken|useless|terrible|awful|horrible)|fuck you|screw (this|you)|so frustrating|this sucks|damn it)\b/</code></blockquote>
+
+  <p>一家 LLM 公司用正则做情感分析——挺讽刺的。但话说回来，用正则比调一次 LLM 推理来判断用户是不是在骂你，确实又快又便宜。</p>
+
+  <h2 class="sec">Native Client Attestation：JS 层之下的 DRM</h2>
+
+  <p>API 请求里有个 <code>cch=00000</code> 占位符。在请求离开进程之前，Bun 的 Zig 原生 HTTP 层会把这五个零替换成一个计算出来的哈希。服务端用这个哈希验证请求确实来自真正的 Claude Code binary，不是伪造的。</p>
+
+  <p>占位符长度一样，所以替换不会改 Content-Length，也不需要重新分配 buffer。计算发生在 JS runtime 之下，JS 层完全看不到。说白了——这是 API 调用的 DRM，在 HTTP 传输层实现。</p>
+
+  <p>这也解释了 OpenCode 法律纠纷的技术背景。Anthropic 不只是口头要求第三方工具别用他们的 API——binary 本身会密码学证明"我是真的 Claude Code 客户端"。</p>
+
+  <h2 class="sec">KAIROS：还没发布的自主 Agent 模式</h2>
+
+  <p>代码里到处都有一个叫 KAIROS 的 feature-gated 模式。从代码路径看，这是个未发布的自主 agent 模式，包括：</p>
+
+  <ul>
+    <li><code>/dream</code> 技能——"nightly memory distillation"（夜间记忆蒸馏）</li>
+    <li>每日只追加的日志</li>
+    <li>GitHub webhook 订阅</li>
+    <li>后台 daemon worker</li>
+    <li>每 5 分钟的 cron 定时刷新</li>
+  </ul>
+
+  <p>这大概是整个泄露里最大的产品路线图发现。一个常驻后台、持续运行的 agent 的基础架构已经搭好了。</p>
+
+  <div class="callout">
+    <strong>我的看法：</strong>有人觉得无所谓，因为 Google 的 Gemini CLI 和 OpenAI 的 Codex 已经开源了。但那些公司开源的是 agent SDK（工具包），不是旗舰产品的完整内部布线。真正的损失不是代码——代码可以重构。而是 feature flag 背后的产品路线图，这些战略意外一旦泄露就收不回来了。
+  </div>
+
+  <a class="src-btn" href="https://alex000kim.com/posts/2026-03-31-claude-code-source-leak/" target="_blank">→ 阅读英文原文</a>
+</div>
+
+<!-- ARTICLE 02 -->
+<div class="article" id="art-02">
+  <div class="article-header">
+    <div class="art-num">02 · Anthropic GitHub Skills · 2026-03-22 ~ 03-25</div>
+    <div class="art-title"><a href="https://github.com/anthropics/skills/commits/main" target="_blank">Claude API Skill 持续自动同步——官方 Skill 规范在悄悄进化</a></div>
+    <div class="art-meta">来源：<a href="https://github.com/anthropics/skills" target="_blank">github.com/anthropics/skills</a> · <a href="https://github.com/anthropics/skills/commits/main" target="_blank">查看提交记录 ↗</a></div>
+  </div>
+
+  <p>3 月 22 日到 25 日之间，Anthropic 的官方 Skills 仓库连续出现了多个自动同步提交，全部标记为 <code>chore: update claude-api skill [auto-sync]</code>。</p>
+
+  <h2 class="sec">发生了什么</h2>
+
+  <p>这些提交不是人工写的——是 Anthropic 内部的自动化管道把 Claude API 文档的变更同步到 Skill 定义文件。短短 4 天内出现 5 次 auto-sync，说明 Claude API 本身在这段时间经历了密集的迭代。</p>
+
+  <h2 class="sec">为什么值得关注</h2>
+
+  <p>Anthropic 的 Skills 仓库是 Claude Code 理解"我能做什么"的知识来源。每一次 SKILL.md 的更新都直接影响 Claude Code 在使用 Anthropic SDK 时的行为——新的参数、新的用法、弃用的旧接口。</p>
+
+  <p>这种自动同步机制本身就值得学习：官方文档变更 → 触发 CI → 自动更新 Skill 定义 → Claude Code 下次读取时就拿到最新信息。不需要人工干预，不会遗漏。</p>
+
+  <h2 class="sec">对 Skill 工程的启示</h2>
+
+  <p>如果你在构建自己的 agent 系统，Anthropic 的做法给了一个清晰的模式：</p>
+
+  <ul>
+    <li><strong>Skill 是活的文档</strong>，不是写完就放着的静态文件。需要有机制让它跟上游保持同步。</li>
+    <li><strong>Auto-sync 的粒度控制</strong>很重要——每个 Skill 独立更新，不是一把全推。</li>
+    <li><strong>提交信息的标准化</strong>（<code>[auto-sync]</code> tag）让人和机器都能快速区分手工更新和自动同步。</li>
+  </ul>
+
+  <div class="callout">
+    <strong>实际影响：</strong>如果你在用 Claude Code 的 <code>claude-api</code> Skill，现在拿到的版本和两周前已经不一样了。建议定期 pull 最新的 Skill 文件，或者直接对着官方仓库做 diff，看看哪些 API 用法有变化。
+  </div>
+
+  <a class="src-btn" href="https://github.com/anthropics/skills/commits/main" target="_blank">→ 查看 GitHub 提交历史</a>
+</div>
+
+<!-- ARTICLE 03 -->
+<div class="article" id="art-03">
+  <div class="article-header">
+    <div class="art-num">03 · Simon Willison · 2026-04-03</div>
+    <div class="art-title"><a href="https://simonwillison.net/2026/Apr/3/vulnerability-research-is-cooked/" target="_blank">当 AI 开始自己找漏洞：安全研究的认知冲击</a></div>
+    <div class="art-meta">来源：<a href="https://simonwillison.net/" target="_blank">simonwillison.net</a> · 引用 Thomas Ptacek 原文 · <a href="https://simonwillison.net/2026/Apr/3/vulnerability-research-is-cooked/" target="_blank">阅读原文 ↗</a></div>
+  </div>
+
+  <p>Simon Willison 在 4 月 3 日集中分享了几条关于 AI 对安全研究领域冲击的内容。核心是 Thomas Ptacek 的一篇文章《Vulnerability Research Is Cooked》——漏洞研究这个领域，正在被 AI agent 彻底改变。</p>
+
+  <h2 class="sec">Agent 在漏洞研究上的能力，是结构性的</h2>
+
+  <p>Ptacek 的核心判断很直接：在未来几个月内，coding agent 会从根本上改变漏洞挖掘的实践和经济学。这不是渐进式改善，而是台阶式跃迁。大量高影响力的漏洞研究，会变成"把 agent 指向一个代码仓库，然后输入'帮我找 zero day'"。</p>
+
+  <blockquote>You can't design a better problem for an LLM agent than exploitation research.<br>——Thomas Ptacek</blockquote>
+
+  <p>为什么 agent 在这件事上特别强？三个原因叠在一起：</p>
+
+  <ul>
+    <li><strong>内置知识</strong>：在你喂它一个 token 之前，frontier LLM 已经编码了海量代码库之间的关联。Linux KVM hypervisor 和 hrtimer 子系统有没有关系？模型知道。</li>
+    <li><strong>Bug class 库</strong>：stale pointer、integer mishandling、type confusion、allocator grooming——所有已知的 bug 类型和利用方式都在模型权重里。</li>
+    <li><strong>不会累</strong>：漏洞发现本质上是模式匹配 + 约束求解 + 可达性分析。结果是明确的成功/失败。Agent 不会觉得无聊，你让它搜到天荒地老它就搜到天荒地老。</li>
+  </ul>
+
+  <h2 class="sec">Linux 内核安全报告的暴增：从每周 2-3 份到每天 5-10 份</h2>
+
+  <p>Simon 同时引用了两位 Linux 内核维护者的证词。Greg Kroah-Hartman（Linux 内核维护者）说：</p>
+
+  <blockquote>几个月前，我们收到的都是 "AI slop"——AI 生成的安全报告，一眼就能看出是错的。但一个月前，世界变了。现在我们收到的报告是真的，是好的，是用 AI 做的。</blockquote>
+
+  <p>Willy Tarreau（HAProxy 核心开发者）给了具体数字：安全报告从两年前的每周 2-3 份，到去年的每周约 10 份（多出来的全是 AI slop），到今年初变成了每天 5-10 份——而且大部分是正确的。他们不得不引入更多维护者来处理。更离谱的是，现在每天都能看到重复报告：同一个 bug，被两个不同的人用不同的工具同时发现。</p>
+
+  <h2 class="sec">供应链攻击的社会工程学也在升级</h2>
+
+  <p>同一天，Simon 还记录了 Axios npm 供应链攻击的事后分析。攻击者的手法高度定制化：伪装成某公司创始人，搭建一个看起来完全真实的 Slack workspace，安排 MS Teams 会议，然后以"你的系统需要更新"为由让维护者安装了 RAT（Remote Access Trojan）。</p>
+
+  <p>Simon 的感受很真实：我也经常在最后一刻才安装 Webex 或 Teams，时间紧迫时什么都点 yes。所有维护重要开源项目的人都需要了解这种攻击方式。</p>
+
+  <div class="callout">
+    <strong>值得想想的事：</strong>AI 同时在攻防两端加速。Agent 能帮你找漏洞，也能帮攻击者生成更精准的社会工程攻击。Linux 内核安全报告从 slop 到正确报告的转变只用了一个月——这种速度对所有软件维护者来说都是一个需要认真面对的变化。
+  </div>
+
+  <a class="src-btn" href="https://simonwillison.net/2026/Apr/3/vulnerability-research-is-cooked/" target="_blank">→ 阅读英文原文</a>
+</div>
+
+<!-- ARTICLE 04 -->
+<div class="article" id="art-04">
+  <div class="article-header">
+    <div class="art-num">04 · Alex Kim · 2025-01-11</div>
+    <div class="art-title"><a href="https://alex000kim.com/posts/2025-01-11-llm-fine-tune-skypilot-mlflow/" target="_blank">在 Kubernetes 上编排 LLM 微调：SkyPilot + MLflow 完整指南</a></div>
+    <div class="art-meta">来源：<a href="https://alex000kim.com/" target="_blank">alex000kim.com</a> · <a href="https://alex000kim.com/posts/2025-01-11-llm-fine-tune-skypilot-mlflow/" target="_blank">阅读原文 ↗</a></div>
+  </div>
+
+  <p>大家讨论 LLM 通常关注模型层面的事——选什么基座、用什么数据、LoRA 还是全参数。但实际上，高效管理计算资源和实验追踪同样重要，甚至更容易被忽视。Alex Kim 这篇文章拿 SkyPilot 和 MLflow 这两个开源工具，演示了如何把 LLM 微调的基础设施搭得可复现、可扩展。</p>
+
+  <h2 class="sec">一个 YAML 启动整个训练</h2>
+
+  <p>SkyPilot 的核心理念是把计算资源抽象成声明式配置。一个 <code>sky.yaml</code> 文件定义了资源需求（比如 <code>H100:8</code>）、环境安装、训练命令——然后 <code>sky launch</code> 一行搞定。不需要手动管 K8s pod，不需要写 Dockerfile，不需要处理 GPU 调度。</p>
+
+  <p>关键配置大概长这样：</p>
+
+  <blockquote>
+    resources:<br>
+    &nbsp;&nbsp;cloud: kubernetes<br>
+    &nbsp;&nbsp;accelerators: H100:8<br><br>
+    setup: |<br>
+    &nbsp;&nbsp;pip install -U -r requirements.txt<br>
+    &nbsp;&nbsp;python generate_train_dataset.py<br><br>
+    run: |<br>
+    &nbsp;&nbsp;accelerate launch --num_processes 8 train.py
+  </blockquote>
+
+  <p>不只是 K8s——SkyPilot 支持几乎所有云厂商（AWS、GCP、Azure），同一份 YAML 换个 <code>cloud:</code> 字段就能跑在不同平台上。</p>
+
+  <h2 class="sec">分布式训练的 MLflow 集成：进程管理是关键</h2>
+
+  <p>多 GPU 分布式训练环境下，MLflow 的日志记录必须小心处理。多个进程同时往 MLflow 写数据会导致竞争条件、重复记录甚至数据损坏。Alex 的方案很实际：</p>
+
+  <ul>
+    <li><strong>只在主进程上初始化 MLflow</strong>，通过 <code>trainer.accelerator.is_main_process</code> 判断</li>
+    <li><strong>训练前保存 run_id</strong>——因为 <code>trainer.train()</code> 完成后会自动关闭 MLflow run，不提前存 ID 后面就没法补日志</li>
+    <li><strong>每个节点设独立的 system metrics ID</strong>，GPU 利用率、显存占用这些指标才能对应到具体的机器</li>
+  </ul>
+
+  <h2 class="sec">实用建议</h2>
+
+  <ul>
+    <li>用 HF Accelerate 时，所有 MLflow 操作前必须检查 <code>is_main_process</code></li>
+    <li>用云厂商时开 <a href="https://docs.skypilot.co/en/latest/examples/managed-jobs.html" target="_blank">managed jobs</a>——spot 抢占或硬件故障时能自动恢复</li>
+    <li>用 <code>sky queue</code> 排多组超参实验，用 <code>sky logs</code> 查历史日志</li>
+    <li>训练完了 <code>sky down dev</code> 把集群关掉——别忘了，H100 按小时计费</li>
+  </ul>
+
+  <div class="callout">
+    <strong>为什么选这篇：</strong>不是最新的文章，但对于任何想认真做 LLM 微调的团队来说，基础设施这层的复杂度经常被低估。SkyPilot + MLflow 这个组合全开源、跨云、支持分布式——比自己从零搭 K8s GPU 调度省太多时间了。
+  </div>
+
+  <a class="src-btn" href="https://alex000kim.com/posts/2025-01-11-llm-fine-tune-skypilot-mlflow/" target="_blank">→ 阅读英文原文</a>
+</div>
+
+<!-- ── 其他值得关注 ── -->
+<div class="sec-label">其他值得关注的思考</div>
+
+<!-- OTHER 01 -->
+<div class="other" id="other-01">
+  <div class="other-title"><a href="https://www.anthropic.com/news" target="_blank">Anthropic 推出 Usage Bundles，额外赠送使用额度庆祝上线</a></div>
+  <div class="other-meta">来源：Anthropic Official · Hacker News · 2026-04-03 · <a href="https://www.anthropic.com/news" target="_blank">原文 ↗</a></div>
+  <p>Anthropic 正式推出 Claude 使用包（Usage Bundles）——一种新的打包定价模式，让重度用户可以按套餐购买 API 使用额度，而非纯按 token 计费。为庆祝上线，Anthropic 为现有订阅用户额外赠送使用额度。</p>
+  <ul>
+    <li>新的定价模式直接影响 Claude 生态的经济学——对高频 API 调用场景（如 Agent 系统、批量处理）尤其有吸引力</li>
+    <li>这是 Anthropic 在商业化上的又一步：从按量付费到套餐制，降低重度用户的边际成本</li>
+    <li>值得关注后续是否会影响 Claude Code 订阅模式——目前已有 HN 用户反馈 Claude Code 订阅政策可能有变化</li>
+  </ul>
+</div>
+
+<!-- ── 固定签名（禁止修改文字）── -->
+<div class="closing">
+  <div class="name">我叫 Eason</div>
+  <div class="creds">CFA持证人 · 前战略咨询合伙人 · 创业者 · 投资人</div>
+  <div class="tagline">在东京经营几家餐厅，用AI做投资研究和餐饮零售管理——然后把踩过的坑写出来</div>
+</div>
+
+<!-- ══ ghost_auto_publish.py 提取终点：.site-footer ══ -->
+<div class="site-footer">
+  Great Minds Think Alike · Issue 004 &nbsp;·&nbsp; easonzhang.ai<br>
+  策划 Mars 🔴 · 内容整理 Curiosity 🔍 · 2026-04-04
+</div>
+
+</div><!-- /.container -->
+</body>
+</html>
