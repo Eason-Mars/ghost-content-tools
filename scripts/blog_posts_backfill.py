@@ -4,14 +4,24 @@ blog_posts_backfill.py -- 历史博文数据补录到 Supabase blog_posts 表
 幂等可重跑（on_conflict slug DO NOTHING）
 """
 
-import psycopg2
+import os
 import sys
 
-DB_HOST = "db.cyzdudbtqunwzvxjumtr.supabase.co"
-DB_PORT = 5432
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PASSWORD = "H6z&&K5EJojs"
+import psycopg2
+
+DB_HOST = os.environ.get("SUPABASE_DB_HOST", "")
+DB_PORT = int(os.environ.get("SUPABASE_DB_PORT", "5432"))
+DB_NAME = os.environ.get("SUPABASE_DB_NAME", "postgres")
+DB_USER = os.environ.get("SUPABASE_DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("SUPABASE_DB_PASSWORD", "")
+
+if not DB_HOST or not DB_PASSWORD:
+    print(
+        "SUPABASE_DB_HOST and SUPABASE_DB_PASSWORD must be set in the environment.\n"
+        "See .env.example for the full list of required variables.",
+        file=sys.stderr,
+    )
+    sys.exit(2)
 
 ALL_POSTS = [
     # --- 已发布 ---

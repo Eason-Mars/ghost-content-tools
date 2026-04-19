@@ -8,15 +8,27 @@ create_blog_posts_table.py — 在 Supabase 建立 blog_posts 表
   python3 scripts/create_blog_posts_table.py
 """
 
-import psycopg2
+import os
 import sys
 from pathlib import Path
 
-DB_HOST = "db.cyzdudbtqunwzvxjumtr.supabase.co"
-DB_PORT = 5432
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PASSWORD = "H6z&&K5EJojs"
+import psycopg2
+
+# Credentials are read from the environment. Set these in your shell or a
+# .env.ghost file (see .env.example). Never commit real values.
+DB_HOST = os.environ.get("SUPABASE_DB_HOST", "")
+DB_PORT = int(os.environ.get("SUPABASE_DB_PORT", "5432"))
+DB_NAME = os.environ.get("SUPABASE_DB_NAME", "postgres")
+DB_USER = os.environ.get("SUPABASE_DB_USER", "postgres")
+DB_PASSWORD = os.environ.get("SUPABASE_DB_PASSWORD", "")
+
+if not DB_HOST or not DB_PASSWORD:
+    print(
+        "❌ SUPABASE_DB_HOST and SUPABASE_DB_PASSWORD must be set in the environment.\n"
+        "   See .env.example for the full list of required variables.",
+        file=sys.stderr,
+    )
+    sys.exit(2)
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS blog_posts (
