@@ -10,7 +10,11 @@ import argparse
 from pathlib import Path
 
 # 确保 scripts 目录在 path 里
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _logger import get_logger
+
+log = get_logger("ghost.backfill")
 
 
 def find_ghost_page(browser):
