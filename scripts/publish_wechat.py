@@ -28,7 +28,11 @@ import html as html_module
 import hashlib
 
 # ── Config ───────────────────────────────────────────────��──────────────
-ENV_FILE = Path(__file__).parent.parent / ".env.wechat"
+# ENV_FILE resolution order:
+#   1. $GHOST_ENV_FILE (explicit override — set this when running from a
+#      different workspace that reuses a shared .env.wechat)
+#   2. <repo-root>/.env.wechat (default, local to this repo)
+ENV_FILE = Path(os.environ.get("GHOST_ENV_FILE") or (Path(__file__).parent.parent / ".env.wechat"))
 CACHE_FILE = ".wechat_cache.json"  # 相对于文章目录
 
 def load_env():
