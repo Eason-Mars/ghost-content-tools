@@ -25,13 +25,24 @@ from _logger import get_logger
 log = get_logger("ghost.publish")
 
 
+# Timeout for Playwright CDP and network operations (seconds)
+HTTP_TIMEOUT = 30000  # 30s in milliseconds for Playwright
+
+
 def extract_content(html_path: str) -> dict:
     """从博文 HTML 提取标题、样式+正文、标签、图片
     
     策略：用 premailer 把 CSS inline 到每个 HTML 元素，
     确保 Ghost HTML Card 渲染时不会 strip 掉样式。
     """
-    html = Path(html_path).read_text(encoding='utf-8')
+    try:
+        html = Path(html_path).read_text(encoding='utf-8')
+    except FileNotFoundError:
+        log.error("HTML file not found: %s", html_path)
+        raise FileNotFoundError(f"HTML file not found: {html_path}")
+    except PermissionError:
+        log.error("Permission denied reading: %s", html_path)
+        raise
 
     # Title: try hero-title div first, then h1 inside hero/masthead, fallback to any h1, then <title> tag
     title_match = re.search(r'<div[^>]*class="hero-title"[^>]*>(.*?)</div>', html, re.DOTALL)
@@ -81,11 +92,15 @@ def extract_content(html_path: str) -> dict:
     #   .x-box      — X 发布简介框（给作者参考用，不发布）
     #   .site-footer — 页脚（Ghost 自带页脚，不需要）
     from bs4 import BeautifulSoup as _BS
-    _soup = _BS(body, 'html.parser')
-    for cls in ['x-box', 'site-footer']:
-        for el in _soup.find_all(class_=cls):
-            el.decompose()
-    body = str(_soup)
+    try:
+        _soup = _BS(body, 'html.parser')
+        for cls in ['x-box', 'site-footer']:
+            for el in _soup.find_all(class_=cls):
+                el.decompose()
+        body = str(_soup)
+    except Exception as e:
+        log.warning("BeautifulSoup parsing failed, using raw HTML: %s", e)
+        # Fall through with body unchanged
 
     # Extract base64 images and replace with placeholders
     img_data_list = []
@@ -183,7 +198,7 @@ def publish(html_path: str, slug: str = None, do_publish: bool = True, update_id
     print(f"🖼️  Images: {len(content['img_data_list'])}")
 
     with sync_playwright() as p:
-        browser = p.chromium.connect_over_cdp("http://127.0.0.1:18800")
+        browser = p.chromium.connect_over_cdp("http://127.0.0.1:18800", timeout=HTTP_TIMEOUT)
         ghost_page = find_ghost_page(browser)
 
         if not ghost_page:
