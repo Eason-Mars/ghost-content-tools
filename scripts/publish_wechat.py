@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
-WeChat Official Account Publisher v2.0
+WeChat Official Account Publisher v3.0
 Usage:
-  python3 publish_wechat.py <html_or_md_file> --title "标题" [--author "作者"] [--cover cover.jpg] [--digest "摘要"] [--draft] [--publish] [--force-new] [--update MEDIA_ID]
+  Single article:
+    python3 publish_wechat.py <html_or_md_file> --title "标题" [--author "作者"] [--cover cover.jpg] [--digest "摘要"] [--draft] [--publish] [--force-new] [--update MEDIA_ID]
 
-升级内容 (v2.0):
+  Multi-article (最多8篇):
+    python3 publish_wechat.py --mode multi <file1> <file2> ... [--draft] [--publish] [--force-new]
+
+升级内容 (v3.0):
+- 多图文消息支持（--mode multi）：接受多个 HTML 文件，缺标题从 <h1>/<title> 提取，缺封面自动生成
 - 图片缓存：.wechat_cache.json 记录已上传图片，避免重复上传
 - 草稿幂等更新：首次创建后存 media_id，后续自动更新同一草稿
 - --force-new：忽略缓存，强制创建新草稿
@@ -256,7 +261,7 @@ def read_content(file_path, token=None, article_dir=None, cache=None):
     """Read content file (HTML or Markdown)"""
     path = Path(file_path)
     text = path.read_text(encoding="utf-8")
-    
+
     if path.suffix in (".html", ".htm"):
         content = text
     else:
@@ -267,12 +272,30 @@ def read_content(file_path, token=None, article_dir=None, cache=None):
         except ImportError:
             print("❌ wechat_formatter.py not found", file=sys.stderr)
             sys.exit(1)
-    
+
     # 处理内容中的本地图片
     if token and article_dir and cache:
         content = process_content_images(token, content, article_dir, cache)
-    
+
     return content
+
+
+def extract_title_from_html(html_content):
+    """从 HTML 中提取标题：优先 <h1>，其次 <title>"""
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    # 优先 <h1>
+    h1 = soup.find('h1')
+    if h1:
+        return h1.get_text().strip()
+
+    # 其次 <title>
+    title = soup.find('title')
+    if title:
+        return title.get_text().strip()
+
+    return "未命名文章"
 
 
 # ── Generate Default Cover ──────────────────────────────────────────────
@@ -337,29 +360,35 @@ def generate_default_cover(title):
 
 
 # ── Draft / Publish ─────────────────────────────────────────────────────
-def create_draft(token, title, content, thumb_media_id, author="Eason", digest=""):
-    """Create article draft"""
+def create_draft(token, articles_list):
+    """
+    Create article draft(s)
+    articles_list: list of dict with keys: title, author, digest, content, thumb_media_id
+    """
     url = f"https://api.weixin.qq.com/cgi-bin/draft/add?access_token={token}"
-    
-    article = {
-        "title": title,
-        "author": author,
-        "digest": digest[:120] if digest else "",
-        "content": content,
-        "thumb_media_id": thumb_media_id,
-        "need_open_comment": 1,
-        "only_fans_can_comment": 0,
-    }
-    
-    data = json.dumps({"articles": [article]}, ensure_ascii=False).encode("utf-8")
+
+    # 格式化为微信 API 需要的格式
+    formatted_articles = []
+    for art in articles_list:
+        formatted_articles.append({
+            "title": art["title"],
+            "author": art["author"],
+            "digest": art["digest"][:120] if art["digest"] else "",
+            "content": art["content"],
+            "thumb_media_id": art["thumb_media_id"],
+            "need_open_comment": 1,
+            "only_fans_can_comment": 0,
+        })
+
+    data = json.dumps({"articles": formatted_articles}, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
     resp = json.loads(urllib.request.urlopen(req, timeout=30).read())
-    
+
     if "media_id" not in resp:
         print(f"❌ Draft error: {resp}", file=sys.stderr)
         sys.exit(1)
-    
-    print(f"✅ Draft created: {resp['media_id']}")
+
+    print(f"✅ Draft created: {resp['media_id']} ({len(formatted_articles)} articles)")
     return resp["media_id"]
 
 
@@ -412,79 +441,145 @@ def publish_draft(token, media_id):
 
 # ── Main ────────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="WeChat Official Account Publisher v2.0")
-    parser.add_argument("file", help="HTML or Markdown file to publish")
-    parser.add_argument("--title", required=True, help="Article title")
+    parser = argparse.ArgumentParser(description="WeChat Official Account Publisher v3.0")
+    parser.add_argument("files", nargs="+", help="HTML or Markdown file(s) to publish")
+    parser.add_argument("--mode", choices=["single", "multi"], default="single", help="Single or multi-article mode")
+    parser.add_argument("--title", help="Article title (single mode only, required if mode=single)")
     parser.add_argument("--author", default="Eason", help="Author name")
-    parser.add_argument("--cover", help="Cover image path (auto-generated if omitted)")
-    parser.add_argument("--digest", default="", help="Article summary (≤120 chars)")
+    parser.add_argument("--cover", help="Cover image path (single mode only, auto-generated if omitted)")
+    parser.add_argument("--digest", default="", help="Article summary (single mode only, ≤120 chars)")
     parser.add_argument("--draft", action="store_true", help="Create draft only (default)")
     parser.add_argument("--publish", action="store_true", help="Publish immediately")
     parser.add_argument("--force-new", action="store_true", help="Ignore cache, create new draft")
-    parser.add_argument("--update", metavar="MEDIA_ID", help="Update existing draft by media_id")
+    parser.add_argument("--update", metavar="MEDIA_ID", help="Update existing draft by media_id (single mode only)")
     parser.add_argument("--token", help="Override access token")
     args = parser.parse_args()
-    
+
+    # 校验参数
+    if args.mode == "single":
+        if not args.title:
+            parser.error("--title is required in single mode")
+        if len(args.files) > 1:
+            parser.error("Single mode accepts only one file")
+    else:  # multi
+        if len(args.files) > 8:
+            parser.error("Multi mode supports up to 8 articles")
+        if args.update:
+            parser.error("--update is not supported in multi mode")
+
     app_id, app_secret = load_env()
     if not app_id or not app_secret:
         print("❌ Missing WECHAT_APP_ID/WECHAT_APP_SECRET in .env.wechat", file=sys.stderr)
         sys.exit(1)
-    
-    # 确定文章目录
-    article_dir = Path(args.file).parent.resolve()
-    
+
+    # 确定文章目录（用第一篇文章的目录）
+    article_dir = Path(args.files[0]).parent.resolve()
+
     # 加载缓存
     cache = load_cache(article_dir) if not args.force_new else {"images": {}}
-    
+
     # 1. Get token
     token = args.token or get_access_token(app_id, app_secret)
     print(f"🔑 Token OK")
-    
-    # 2. Read & convert content（同时处理内容图片）
-    content = read_content(args.file, token, article_dir, cache)
-    print(f"📄 Content loaded ({len(content)} chars)")
-    
-    # 3. Upload cover
-    if args.cover:
-        cover_path = Path(args.cover)
-    else:
-        cover_path = generate_default_cover(args.title)
-    thumb_media_id = upload_thumb(token, cover_path, cache, article_dir)
-    
-    # 4. Create or update draft
-    existing_media_id = args.update or (cache.get("draft_media_id") if not args.force_new else None)
-    
-    if existing_media_id:
-        # 尝试更新现有草稿
-        media_id = update_draft(
-            token, existing_media_id, args.title, content, thumb_media_id,
-            author=args.author, digest=args.digest,
-        )
-        if media_id is None:
-            # 更新失败，创建新草稿
-            print("⚠️ Update failed, creating new draft...")
-            media_id = create_draft(
-                token, args.title, content, thumb_media_id,
+
+    if args.mode == "single":
+        # === Single article mode ===
+        # 2. Read & convert content（同时处理内容图片）
+        content = read_content(args.files[0], token, article_dir, cache)
+        print(f"📄 Content loaded ({len(content)} chars)")
+
+        # 3. Upload cover
+        if args.cover:
+            cover_path = Path(args.cover)
+        else:
+            cover_path = generate_default_cover(args.title)
+        thumb_media_id = upload_thumb(token, cover_path, cache, article_dir)
+
+        # 4. Create or update draft
+        existing_media_id = args.update or (cache.get("draft_media_id") if not args.force_new else None)
+
+        if existing_media_id:
+            # 尝试更新现有草稿
+            media_id = update_draft(
+                token, existing_media_id, args.title, content, thumb_media_id,
                 author=args.author, digest=args.digest,
             )
+            if media_id is None:
+                # 更新失败，创建新草稿
+                print("⚠️ Update failed, creating new draft...")
+                articles_list = [{
+                    "title": args.title,
+                    "author": args.author,
+                    "digest": args.digest,
+                    "content": content,
+                    "thumb_media_id": thumb_media_id,
+                }]
+                media_id = create_draft(token, articles_list)
+        else:
+            # 创建新草稿
+            articles_list = [{
+                "title": args.title,
+                "author": args.author,
+                "digest": args.digest,
+                "content": content,
+                "thumb_media_id": thumb_media_id,
+            }]
+            media_id = create_draft(token, articles_list)
+
+        # 保存 draft_media_id 到缓存
+        cache["draft_media_id"] = media_id
+        save_cache(article_dir, cache)
+
+        # 5. Publish if requested
+        if args.publish:
+            publish_draft(token, media_id)
+        else:
+            print(f"📝 Draft ready. Run with --publish to publish, or publish from WeChat admin.")
+            print(f"   Draft media_id: {media_id}")
+            print(f"   Cache saved to: {get_cache_path(article_dir)}")
+
     else:
-        # 创建新草稿
-        media_id = create_draft(
-            token, args.title, content, thumb_media_id,
-            author=args.author, digest=args.digest,
-        )
-    
-    # 保存 draft_media_id 到缓存
-    cache["draft_media_id"] = media_id
-    save_cache(article_dir, cache)
-    
-    # 5. Publish if requested
-    if args.publish:
-        publish_draft(token, media_id)
-    else:
-        print(f"📝 Draft ready. Run with --publish to publish, or publish from WeChat admin.")
-        print(f"   Draft media_id: {media_id}")
-        print(f"   Cache saved to: {get_cache_path(article_dir)}")
+        # === Multi-article mode ===
+        articles_list = []
+
+        for idx, file_path in enumerate(args.files, 1):
+            print(f"\n📄 Processing article {idx}/{len(args.files)}: {file_path}")
+
+            # 读取内容
+            content = read_content(file_path, token, article_dir, cache)
+            print(f"   Content: {len(content)} chars")
+
+            # 提取标题
+            title = extract_title_from_html(content)
+            print(f"   Title: {title}")
+
+            # 生成封面
+            cover_path = generate_default_cover(title)
+            thumb_media_id = upload_thumb(token, cover_path, cache, article_dir)
+
+            articles_list.append({
+                "title": title,
+                "author": args.author,
+                "digest": "",  # 多图文可以空着
+                "content": content,
+                "thumb_media_id": thumb_media_id,
+            })
+
+        # 创建草稿（一次性提交所有文章）
+        print(f"\n📦 Creating multi-article draft ({len(articles_list)} articles)...")
+        media_id = create_draft(token, articles_list)
+
+        # 保存 draft_media_id 到缓存
+        cache["draft_media_id"] = media_id
+        save_cache(article_dir, cache)
+
+        # Publish if requested
+        if args.publish:
+            publish_draft(token, media_id)
+        else:
+            print(f"📝 Draft ready. Run with --publish to publish, or publish from WeChat admin.")
+            print(f"   Draft media_id: {media_id}")
+            print(f"   Cache saved to: {get_cache_path(article_dir)}")
 
 
 if __name__ == "__main__":

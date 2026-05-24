@@ -61,7 +61,6 @@ def inline_css(html: str) -> str:
             remove_classes=False,
             strip_important=False,
             allow_network=False,
-            disable_link_rewrites=True,
             cssutils_logging_level=40,
         )
     except Exception as e:
@@ -245,6 +244,60 @@ def convert_inline_code(soup: BeautifulSoup, theme: dict) -> None:
         code.replace_with(span)
 
 
+def convert_external_links_to_footnotes(soup: BeautifulSoup) -> BeautifulSoup:
+    """
+    将外链转换为底部脚注形式：
+    - 跳过 mp.weixin.qq.com 内链
+    - 跳过锚点（#开头）
+    - 外链改为 [N] 编号 + 文末添加脚注区块
+    """
+    links = []
+    link_counter = 1
+
+    # 收集所有外链
+    for a in soup.find_all('a', href=True):
+        href = a.get('href', '').strip()
+
+        # 跳过：空链接、锚点、微信公众号链接
+        if not href or href.startswith('#') or 'mp.weixin.qq.com' in href:
+            continue
+
+        # 收集外链
+        link_text = a.get_text().strip()
+        links.append((href, link_text))
+
+        # 替换为 [N] 编号
+        sup = soup.new_tag('sup', style='color: #1a73e8; font-weight: bold;')
+        sup.string = f'[{link_counter}]'
+        a.replace_with(sup)
+        link_counter += 1
+
+    # 如果有外链，在文末添加脚注区块
+    if links:
+        footnotes_section = soup.new_tag('section', style='margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;')
+
+        # 标题
+        title = soup.new_tag('p', style='font-size: 16px; font-weight: bold; color: #333; margin-bottom: 12px;')
+        title.string = '📎 参考链接'
+        footnotes_section.append(title)
+
+        # 每个链接
+        for idx, (href, text) in enumerate(links, 1):
+            p = soup.new_tag('p', style='font-size: 13px; line-height: 1.8; color: #666; margin-bottom: 8px; word-break: break-all;')
+            p.string = f'[{idx}] {text or href}: {href}'
+            footnotes_section.append(p)
+
+        # 添加到 body 最后
+        if soup.find('section'):
+            # 如果已经有 section 容器，添加到最后
+            last_section = soup.find_all('section')[-1]
+            last_section.insert_after(footnotes_section)
+        else:
+            soup.append(footnotes_section)
+
+    return soup
+
+
 def fix_cjk_punctuation(html: str) -> str:
     """
     中文标点防断行：</strong>：→ </strong>\u2060：
@@ -260,7 +313,7 @@ def wrap_with_container(body_html: str, theme: dict) -> str:
     return f'<section style="{container_style}">{body_html}</section>'
 
 
-def extract_body(html_path: str, theme_id: str = DEFAULT_THEME) -> str:
+def extract_body(html_path: str, theme_id: str = DEFAULT_THEME, enable_footnotes: bool = True) -> str:
     html = Path(html_path).read_text('utf-8')
     theme = get_theme(theme_id)
 
@@ -318,6 +371,10 @@ def extract_body(html_path: str, theme_id: str = DEFAULT_THEME) -> str:
     # Step 11: 行内 code → span（单引号字体）
     convert_inline_code(body_soup, theme)
 
+    # Step 11.5: 外链 → 底部脚注
+    if enable_footnotes:
+        body_soup = convert_external_links_to_footnotes(body_soup)
+
     # Step 12: container 包裹
     body_html = str(body_soup)
     wrapped = wrap_with_container(body_html, theme)
@@ -329,22 +386,24 @@ def extract_body(html_path: str, theme_id: str = DEFAULT_THEME) -> str:
 
 
 def main():
-    if len(sys.argv) < 3:
-        print(__doc__)
+    import argparse
+    parser = argparse.ArgumentParser(description="Ghost HTML → WeChat body extractor")
+    parser.add_argument("input", help="Input HTML file")
+    parser.add_argument("output", help="Output HTML file")
+    parser.add_argument("theme", nargs="?", default=DEFAULT_THEME, help=f"Theme ID (default: {DEFAULT_THEME})")
+    parser.add_argument("--no-footnotes", action="store_true", help="Disable external link to footnote conversion")
+    args = parser.parse_args()
+
+    if not Path(args.input).exists():
+        print(f"❌ 输入文件不存在: {args.input}")
         sys.exit(1)
 
-    input_path = sys.argv[1]
-    output_path = sys.argv[2]
-    theme_id = sys.argv[3] if len(sys.argv) > 3 else DEFAULT_THEME
-
-    if not Path(input_path).exists():
-        print(f"❌ 输入文件不存在: {input_path}")
-        sys.exit(1)
-
-    print(f"📄 提取正文: {input_path}")
-    print(f"🎨 主题: {theme_id}")
-    body = extract_body(input_path, theme_id)
-    Path(output_path).write_text(body, 'utf-8')
+    print(f"📄 提取正文: {args.input}")
+    print(f"🎨 主题: {args.theme}")
+    enable_footnotes = not args.no_footnotes
+    print(f"🔗 外链脚注: {'✅' if enable_footnotes else '❌'}")
+    body = extract_body(args.input, args.theme, enable_footnotes)
+    Path(args.output).write_text(body, 'utf-8')
 
     # QC
     ul_left = body.count('<ul')
@@ -353,7 +412,7 @@ def main():
     dq_font = '"SF Mono"' in body
     page_container = 'class="page"' in body
 
-    print(f"✅ 正文提取完成: {output_path} ({len(body):,} 字符)")
+    print(f"✅ 正文提取完成: {args.output} ({len(body):,} 字符)")
     print(f"   ul/ol 残留: {ul_left}  pre 残留: {pre_left}  code 残留: {code_left}")
     print(f"   双引号字体: {dq_font}  .page 容器: {page_container}")
     if any([ul_left, pre_left, code_left, dq_font, page_container]):
