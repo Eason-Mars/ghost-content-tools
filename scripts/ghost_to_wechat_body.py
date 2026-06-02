@@ -16,7 +16,12 @@ ghost_to_wechat_body.py — Ghost HTML → 微信公众号正文提取器（v2�
   9. pre/code 块 → 灰色 section 纯文字
   10. 行内 code → span（字体改单引号避免微信双引号截断 bug）
   11. 中文标点防断行（<strong> 等行内元素后的标点吸附）
-  12. img: src 不处理（微信公众号编辑器会自动处理）
+  12. img: base64 src 先暂存为占位符（避免 BeautifulSoup 破坏超长属性），处理完成后还原
+      ⚠️ 还原逻辑铁律（2026-05-16 血泪固化）：
+         b64_store[key] = original_full_src_attr（即 `src="data:image/..."`，含 src= 前缀）
+         还原时必须用：result.replace(f'src="{key}"', original_src)
+         不能用：result.replace(f'src="{key}"', f'src="{original_src}"')
+         否则变成双重 src：src="src="data:image/...""，微信图片全部消失
 
 踩坑记录（历史）：
   - 必须先 premailer inline，否则自定义 CSS class 样式在微信全丢
@@ -34,6 +39,28 @@ ghost_to_wechat_body.py — Ghost HTML → 微信公众号正文提取器（v2�
   python3 scripts/ghost_to_wechat_body.py \\
     workspace-insight/output/2026-03-22-ai-governance-evolution.html \\
     /tmp/ai-governance-body.html claude
+
+📐 微信兼容 HTML 最佳实践（2026-05-25 固化）：
+
+  【视觉盒子 visual box】
+  有 background-color 或 border-left 的 div = 视觉盒子，Step 4.5 保留其 padding。
+  无需特殊处理：style="background:#xxx; padding:20px" 直接写即可。
+
+  【内联徽章 badge / 标签】
+  用 <span style="display:inline-block"> 不要用 <div>。
+  div 在 WeChat 是块元素（全宽色条），span 是内联（小徽章）。
+
+  【左右对比表格】
+  WeChat 不支持 flex（两列堆叠）→ 必须用 <table><tr><td> 实现左右并排。
+
+  【padding 规则】
+  布局容器（无 bg/border）→ 左右 padding 自动清零（防双重留白）
+  视觉盒子（有 bg 或 border-left）→ padding 完全保留
+  单值如 padding:20px → 不被清零；两值如 padding:20px 16px → 视觉盒子保留
+
+  【<strong> 样式】
+  只加 font-weight + color，不加 background-color/padding/border-radius。
+  eason 主题：font-weight:700; color:#8B3A2A !important
 """
 
 import sys
@@ -61,6 +88,7 @@ def inline_css(html: str) -> str:
             remove_classes=False,
             strip_important=False,
             allow_network=False,
+            disable_link_rewrites=True,
             cssutils_logging_level=40,
         )
     except Exception as e:
@@ -244,60 +272,6 @@ def convert_inline_code(soup: BeautifulSoup, theme: dict) -> None:
         code.replace_with(span)
 
 
-def convert_external_links_to_footnotes(soup: BeautifulSoup) -> BeautifulSoup:
-    """
-    将外链转换为底部脚注形式：
-    - 跳过 mp.weixin.qq.com 内链
-    - 跳过锚点（#开头）
-    - 外链改为 [N] 编号 + 文末添加脚注区块
-    """
-    links = []
-    link_counter = 1
-
-    # 收集所有外链
-    for a in soup.find_all('a', href=True):
-        href = a.get('href', '').strip()
-
-        # 跳过：空链接、锚点、微信公众号链接
-        if not href or href.startswith('#') or 'mp.weixin.qq.com' in href:
-            continue
-
-        # 收集外链
-        link_text = a.get_text().strip()
-        links.append((href, link_text))
-
-        # 替换为 [N] 编号
-        sup = soup.new_tag('sup', style='color: #1a73e8; font-weight: bold;')
-        sup.string = f'[{link_counter}]'
-        a.replace_with(sup)
-        link_counter += 1
-
-    # 如果有外链，在文末添加脚注区块
-    if links:
-        footnotes_section = soup.new_tag('section', style='margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;')
-
-        # 标题
-        title = soup.new_tag('p', style='font-size: 16px; font-weight: bold; color: #333; margin-bottom: 12px;')
-        title.string = '📎 参考链接'
-        footnotes_section.append(title)
-
-        # 每个链接
-        for idx, (href, text) in enumerate(links, 1):
-            p = soup.new_tag('p', style='font-size: 13px; line-height: 1.8; color: #666; margin-bottom: 8px; word-break: break-all;')
-            p.string = f'[{idx}] {text or href}: {href}'
-            footnotes_section.append(p)
-
-        # 添加到 body 最后
-        if soup.find('section'):
-            # 如果已经有 section 容器，添加到最后
-            last_section = soup.find_all('section')[-1]
-            last_section.insert_after(footnotes_section)
-        else:
-            soup.append(footnotes_section)
-
-    return soup
-
-
 def fix_cjk_punctuation(html: str) -> str:
     """
     中文标点防断行：</strong>：→ </strong>\u2060：
@@ -313,12 +287,40 @@ def wrap_with_container(body_html: str, theme: dict) -> str:
     return f'<section style="{container_style}">{body_html}</section>'
 
 
-def extract_body(html_path: str, theme_id: str = DEFAULT_THEME, enable_footnotes: bool = True) -> str:
+def extract_body(html_path: str, theme_id: str = DEFAULT_THEME) -> str:
     html = Path(html_path).read_text('utf-8')
     theme = get_theme(theme_id)
 
+    # Step 0: 占位替换 base64 图片（防止 BeautifulSoup 截断超长 src attribute）
+    b64_store = {}  # placeholder_id → full_src
+    def stash_b64_in_html(raw_html: str) -> str:
+        """用字符串扫描替换，避免 re.sub 在超长 base64 上的递归限制"""
+        result = []
+        i = 0
+        counter = 0
+        tag = 'src="data:image/'
+        while i < len(raw_html):
+            pos = raw_html.find(tag, i)
+            if pos == -1:
+                result.append(raw_html[i:])
+                break
+            result.append(raw_html[i:pos])
+            # 找结束双引号
+            end = raw_html.find('"', pos + len(tag))
+            if end == -1:
+                result.append(raw_html[pos:])
+                break
+            full_src = raw_html[pos:end+1]  # src="data:image/..."
+            counter += 1
+            key = f'__B64_{counter:04d}__'  # 用计数器，避免JPEG文件头相同导致MD5碰撞
+            b64_store[key] = full_src
+            result.append(f'src="{key}"')
+            i = end + 1
+        return ''.join(result)
+    html_stashed = stash_b64_in_html(html)
+
     # Step 1: premailer inline
-    inlined = inline_css(html)
+    inlined = inline_css(html_stashed)
 
     # Step 2: parse
     soup = BeautifulSoup(inlined, 'html.parser')
@@ -327,19 +329,44 @@ def extract_body(html_path: str, theme_id: str = DEFAULT_THEME, enable_footnotes
     strip_blocks(soup)
 
     # Step 4: 取 .page 内容
-    page = soup.find(class_='page')
-    if not page:
-        print("⚠️ 未找到 .page 容器，使用 <body> 内容", file=sys.stderr)
-        body_soup = BeautifulSoup(soup.find('body').decode_contents(), 'html.parser')
+    # 注意：不能用 page.decode_contents()，BeautifulSoup 在超大文件中对嵌套 div 处理不正确会截断
+    # 改用正则直接从 stash 后的 html 中提取 .page 内容，再交给 BeautifulSoup 处理
+    page_content_match = re.search(
+        r'<div[^>]*class=["\'][^"\']*(\bpage\b)[^"\'][^>]*>(.*?)</div>\s*</body>',
+        html_stashed, re.DOTALL
+    )
+    if page_content_match:
+        page_inner = page_content_match.group(2)
     else:
-        body_soup = BeautifulSoup(page.decode_contents(), 'html.parser')
+        # fallback: soup
+        page_el = soup.find(class_='page')
+        page_inner = page_el.decode_contents() if page_el else soup.find('body').decode_contents()
+        print("⚠️ 正则提取 .page 失败，使用 BeautifulSoup fallback", file=sys.stderr)
+    body_soup = BeautifulSoup(page_inner, 'html.parser')
 
-    # Step 4.5: 清除 .lead / .content-body 的左右 padding（微信里会产生双重留白）
+    # Step 4.5: 清除容器级元素的左右 padding（微信里会产生双重留白）
+    # 注意：只清除布局容器（div/section/article/p），不清除内容元素（h2/blockquote/td/th/li 等需要保留 padding）
+    # 例外：有 background-color 或 border-left 的元素是视觉盒子，不清除其 padding（2026-05-25 修复）
     import re as _re
+    PADDING_STRIP_TAGS = {'div', 'section', 'article', 'p', 'figure', 'main', 'header', 'footer'}
+    def _is_visual_box(style_str):
+        """判断是否是视觉盒子（有背景色或左边框），视觉盒子保留 padding"""
+        if _re.search(r'background(-color)?\s*:\s*(?!transparent|inherit)', style_str, _re.I):
+            return True
+        if 'border-left' in style_str or 'border:' in style_str:
+            return True
+        return False
     for el in body_soup.find_all(True):
+        if el.name not in PADDING_STRIP_TAGS:
+            continue
         style = el.get('style', '')
         if style:
-            # 去掉所有左右 padding（Ghost 模板特有，微信不需要，任何 px 值都清）
+            # 视觉盒子（有背景色/边框）→ 保留 padding，只清 max-width
+            if _is_visual_box(style):
+                style = _re.sub(r'max-width\s*:\s*720px\s*;?\s*', '', style)
+                el['style'] = style.strip().strip(';')
+                continue
+            # 布局容器 → 去掉所有左右 padding（Ghost 模板特有，微信不需要，任何 px 值都清）
             style = _re.sub(r'padding-left\s*:\s*\d+px\s*;?\s*', '', style)
             style = _re.sub(r'padding-right\s*:\s*\d+px\s*;?\s*', '', style)
             # padding: 0 Xpx 形式也去掉（page-inner / content 常见写法）
@@ -371,10 +398,6 @@ def extract_body(html_path: str, theme_id: str = DEFAULT_THEME, enable_footnotes
     # Step 11: 行内 code → span（单引号字体）
     convert_inline_code(body_soup, theme)
 
-    # Step 11.5: 外链 → 底部脚注
-    if enable_footnotes:
-        body_soup = convert_external_links_to_footnotes(body_soup)
-
     # Step 12: container 包裹
     body_html = str(body_soup)
     wrapped = wrap_with_container(body_html, theme)
@@ -382,28 +405,30 @@ def extract_body(html_path: str, theme_id: str = DEFAULT_THEME, enable_footnotes
     # Step 13: 中文标点防断行
     result = fix_cjk_punctuation(wrapped)
 
+    # Step 14: 还原 base64 占位符
+    for key, original_src in b64_store.items():
+        result = result.replace(f'src="{key}"', original_src)
+
     return result
 
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="Ghost HTML → WeChat body extractor")
-    parser.add_argument("input", help="Input HTML file")
-    parser.add_argument("output", help="Output HTML file")
-    parser.add_argument("theme", nargs="?", default=DEFAULT_THEME, help=f"Theme ID (default: {DEFAULT_THEME})")
-    parser.add_argument("--no-footnotes", action="store_true", help="Disable external link to footnote conversion")
-    args = parser.parse_args()
-
-    if not Path(args.input).exists():
-        print(f"❌ 输入文件不存在: {args.input}")
+    if len(sys.argv) < 3:
+        print(__doc__)
         sys.exit(1)
 
-    print(f"📄 提取正文: {args.input}")
-    print(f"🎨 主题: {args.theme}")
-    enable_footnotes = not args.no_footnotes
-    print(f"🔗 外链脚注: {'✅' if enable_footnotes else '❌'}")
-    body = extract_body(args.input, args.theme, enable_footnotes)
-    Path(args.output).write_text(body, 'utf-8')
+    input_path = sys.argv[1]
+    output_path = sys.argv[2]
+    theme_id = sys.argv[3] if len(sys.argv) > 3 else DEFAULT_THEME
+
+    if not Path(input_path).exists():
+        print(f"❌ 输入文件不存在: {input_path}")
+        sys.exit(1)
+
+    print(f"📄 提取正文: {input_path}")
+    print(f"🎨 主题: {theme_id}")
+    body = extract_body(input_path, theme_id)
+    Path(output_path).write_text(body, 'utf-8')
 
     # QC
     ul_left = body.count('<ul')
@@ -412,7 +437,7 @@ def main():
     dq_font = '"SF Mono"' in body
     page_container = 'class="page"' in body
 
-    print(f"✅ 正文提取完成: {args.output} ({len(body):,} 字符)")
+    print(f"✅ 正文提取完成: {output_path} ({len(body):,} 字符)")
     print(f"   ul/ol 残留: {ul_left}  pre 残留: {pre_left}  code 残留: {code_left}")
     print(f"   双引号字体: {dq_font}  .page 容器: {page_container}")
     if any([ul_left, pre_left, code_left, dq_font, page_container]):
