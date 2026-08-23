@@ -81,11 +81,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 4. ONLY THEN: Make the claim
 ```
 
-Common rationalizations to reject:
-- "Should pass" / "probably works" → run it
-- "Tests passed earlier" → run again now
-- "Just a small change" → still run it
-- "Agent reported success" → verify independently
+Rationalizations to reject: "Should pass" / "probably works" / "tests passed earlier" / "just a small change" / "agent reported success" → run it anyway.
 
 Exit criterion: You have fresh terminal output confirming the claim.
 
@@ -97,7 +93,7 @@ Exit criterion: You have fresh terminal output confirming the claim.
 
 ```
 Phase 1 (REQUIRED before any fix):
-1. Read error messages completely — don't skim
+1. Read error messages completely — do not skim
 2. Reproduce the issue consistently
 3. Form a hypothesis from evidence, not guesses
 
@@ -107,10 +103,7 @@ Phase 2: Targeted fix
 - Verify fix resolves the original issue
 ```
 
-Rationalizations to reject:
-- "Obvious fix" → still find root cause first
-- "Time pressure" → systematic is faster than thrashing
-- "Just try this" → no, diagnose first
+Rationalizations to reject: "Obvious fix" / "time pressure" / "just try this" → diagnose first.
 
 ---
 
@@ -119,18 +112,14 @@ Rationalizations to reject:
 **Write the failing test first. Watch it fail. Then write minimal code to pass.**
 
 ```
-RED → verify test fails (if it doesn't fail, test is wrong)
+RED   → write test, verify it fails (wrong failure = wrong test)
 GREEN → minimal code to pass, nothing extra
-REFACTOR → clean up, tests still green
+REFACTOR → clean up, keep tests green
 ```
 
-Iron law: No production code without a failing test first.
-If you wrote code before the test — delete it, start over.
+Iron law: No production code without a failing test first. Wrote code before the test? Delete it, start over.
 
-Rationalizations to reject:
-- "Too simple to need tests" → write them anyway
-- "I'll add tests later" → later doesn't happen
-- "Prototype only" → check with human partner first
+Rationalizations to reject: "Too simple" / "I'll add tests later" / "prototype only" → write the test.
 
 ---
 
@@ -186,6 +175,13 @@ Rationalizations to reject:
 - 重试用指数退避（2^attempt × 100ms），触发重试的操作必须幂等
 
 ### 上线流程
+- **部署顺序：先 migration → 再新代码**（反过来会因字段不存在报错）
+- staging 先完整跑核心流程，migration 在 staging 先执行确认无报错
+- 发现线上问题：**第一反应是回滚**（<5分钟），不在生产 hot-fix
+
+### 决策原则
+> 每次执行操作前问自己：「如果出错了，我能恢复吗？」
+> 答案是「不知道」或「不确定」→ 先停下来搞清楚，再动。
 
 ---
 
